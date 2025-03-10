@@ -67,21 +67,8 @@ export function LoginForm() {
 
           if (userError) {
             console.error("Error fetching user data:", userError);
-            // Create user record if it doesn't exist
-            if (userError.code === "PGRST116") {
-              const { error: insertError } = await supabase
-                .from("users")
-                .insert({
-                  id: data.user.id,
-                  first_name: data.user.user_metadata?.first_name || "",
-                  last_name: data.user.user_metadata?.last_name || "",
-                  active: true,
-                });
-
-              if (insertError) {
-                console.error("Error creating user profile:", insertError);
-              }
-
+            // If user doesn't exist in the database, redirect to onboarding
+            if (userError && userError.code === "PGRST116") {
               router.push("/onboarding");
               router.refresh();
               return;

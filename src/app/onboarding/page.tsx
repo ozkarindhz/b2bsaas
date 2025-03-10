@@ -21,13 +21,33 @@ export default async function OnboardingPage() {
   }
 
   // Check if user already has a tenant
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from("users")
     .select("tenant_id")
     .eq("id", session.user.id)
     .single();
 
-  if (userData?.tenant_id) {
+  // If user doesn't exist in the database, create a basic record
+  if (userError && userError.code === "PGRST116") {
+    const { error: insertError } = await supabase.from("users").insert({
+      id: session.user.id,
+      first_name:
+        session.user.user_metadata?.first_name ||
+        session.user.user_metadata?.name?.split(" ")[0] ||
+        "",
+      last_name:
+        session.user.user_metadata?.last_name ||
+        (session.user.user_metadata?.name
+          ? session.user.user_metadata.name.split(" ").slice(1).join(" ")
+          : ""),
+      avatar_url: session.user.user_metadata?.avatar_url,
+      active: true,
+    });
+
+    if (insertError) {
+      console.error("Error creating user profile:", insertError);
+    }
+  } else if (userData?.tenant_id) {
     redirect("/dashboard");
   }
 

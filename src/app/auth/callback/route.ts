@@ -38,26 +38,9 @@ export async function GET(request: Request) {
         .eq("id", data.user.id)
         .single();
 
-      // If user doesn't exist in the users table, create a new record
+      // If user doesn't exist in the users table, redirect to onboarding
       if (userError || !userData) {
-        const { error: insertError } = await supabase.from("users").insert({
-          id: data.user.id,
-          first_name:
-            data.user.user_metadata.first_name ||
-            data.user.user_metadata.name?.split(" ")[0] ||
-            "",
-          last_name:
-            data.user.user_metadata.last_name ||
-            data.user.user_metadata.name?.split(" ").slice(1).join(" ") ||
-            "",
-          avatar_url: data.user.user_metadata.avatar_url,
-        });
-
-        if (insertError) {
-          console.error("Error creating user profile:", insertError);
-        }
-
-        // Redirect to onboarding if user doesn't have a tenant
+        // Redirect to onboarding
         return NextResponse.redirect(`${origin}/onboarding`);
       }
 
